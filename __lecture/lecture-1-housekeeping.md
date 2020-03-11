@@ -73,6 +73,7 @@ Fix the following state hooks
 ---
 
 ```js
+//to correct just move the state outside of the if
 const Button = ({ type, children }) => {
   if (type === 'primary') {
     const [color, setColor] = React.useState('red');

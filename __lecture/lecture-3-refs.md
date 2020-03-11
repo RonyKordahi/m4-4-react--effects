@@ -109,6 +109,22 @@ const ConfirmButton = () => {
   return <button id="confirm-button">Confirm</button>;
 };
 ```
+```js
+//answer
+const ConfirmButton = () => {
+
+  const btn = React.useRef(null);
+
+  React.useEffect(() => {
+
+    if (btn) {
+      btn.current.focus();
+    }
+  }, []);
+
+  return <button ref={btn} id="confirm-button">Confirm</button>;
+};
+```
 
 ---
 
