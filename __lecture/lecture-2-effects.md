@@ -141,6 +141,23 @@ const App = () => {
 }
 ```
 
+```js
+//correction
+const App = () => {
+  const [cart, setCart] = React.useState({});
+
+  React.useEffect(() => {
+      fetch('some-url')
+        .then(data => {
+          console.log('Got data:', data);
+          setCart(data);
+        });
+  }, []);
+  
+  // ...
+}
+```
+
 ---
 
 **Tip:** Use an empty dependency array to _only_ run the fetch on mount
@@ -166,6 +183,23 @@ const App = () => {
   );
 }
 ```
+```js
+//answer
+const App = () => {
+  const [count, setCount] = React.useState(0);
+
+
+  return (
+    <button onClick={() => setCount(count + 1)}>
+      Increment
+    </button>
+  );
+
+  React.useEffect(() => {
+    document.title = `You have clicked ${count} times`;
+  }, [count]);
+}
+```
 
 ---
 
@@ -175,6 +209,29 @@ const App = ({ color }) => {
 
   window.localStorage.setItem('value', value);
   window.localStorage.setItem('color', color);
+
+  return (
+    <div>
+      Value: {value}
+      <button onClick={() => setValue(!value)}>
+        Toggle thing
+      </button>
+    </div>
+  );
+}
+```
+```js
+//answer
+const App = ({ color }) => {
+  const [value, setValue] = React.useState(false);
+
+  React.useEffect(() => {
+    window.localStorage.setItem('value', value);
+  }, [value]);
+
+  React.useEffect(() => {
+    window.localStorage.setItem('color', color);
+  }, [color]);  
 
   return (
     <div>
@@ -196,6 +253,25 @@ const Modal = ({ handleClose }) => {
       handleClose();
     }
   });
+
+  return (
+    <div>
+      Modal stuff
+    </div>
+  );
+}
+```
+```js
+//answer
+const Modal = ({ handleClose }) => {
+  
+  React.useEffect(() => {
+    window.addEventListener('keydown', (ev) => {
+      if (ev.code === 'Escape') {
+        handleClose();
+      }
+    });
+  }, []); //empty array works on the FIRST RENDER ONLY
 
   return (
     <div>
@@ -277,34 +353,6 @@ const Home = () => {
 
 ---
 
-Unsubscribes are processed **right before** the next update, and **right before** removal.
-
----
-
-import updateASrc from './assets/update-A.svg';
-
-<img src={updateASrc} style={{ width: '100%' }} />
-
----
-
-import updateBSrc from './assets/update-B.svg';
-
-<img src={updateBSrc} style={{ width: '100%' }} />
-
----
-
-import updateCSrc from './assets/update-C.svg';
-
-<img src={updateCSrc} style={{ width: '100%' }} />
-
----
-
-import updateDSrc from './assets/update-D.svg';
-
-<img src={updateDSrc} style={{ width: '100%' }} />
-
----
-
 # Exercises
 
 Make sure to do the appropriate cleanup work
@@ -323,6 +371,22 @@ const App = () => {
   return null;
 }
 ```
+```js
+//answer
+const App = () => {
+  React.useEffect(() => {
+    const timeout = setTimeout(() => {
+      console.log('1 second after update!')
+    }, 1000);
+
+    return () => {
+      clearTimeout(timeout);
+    }
+  }, [])
+
+  return null;
+}
+```
 
 ---
 
@@ -332,6 +396,26 @@ const App = () => {
     window.addEventListener('keydown', (ev) => {
       console.log('You pressed: ' + ev.code);
     })
+  }, [])
+
+  return null;
+}
+```
+```js
+//answer
+const App = () => {
+
+  const handlePress = (ev) => {
+      console.log('You pressed: ' + ev.code);
+  }
+
+  React.useEffect(() => {
+    window.addEventListener('keydown', handlePress);
+
+    return () => {
+      window.removeEventListener("keydow", handlePress);
+    }
+
   }, [])
 
   return null;
@@ -403,7 +487,35 @@ const App = ({ path }) => {
 
 ```js
 // refactoring time...
+const useMousePos = () => {
+  const [mousePosition, setMousePosition] = React.useState({x: null, y: null});
 
+  React.useEffect(() => {
+    const handleMousemove = (ev) => {
+      setMousePosition({ x: ev.clientX, y: ev.clientY });
+    };
+
+    window.addEventListener('mousemove', handleMousemove);
+
+    return () => {
+      window.removeEventListener('mousemove', handleMousemove)
+    }
+  }, []);
+
+  return mousePosition;
+}
+
+//for our example, the useMousePos hook is in the same file as the App component. It could have been in a separate file and imported/exported.
+const App = ({ path }) => {
+
+  const mousePosition = useMousePos();
+
+  return (
+    <div>
+      The mouse is at {mousePosition.x}, {mousePosition.y}.
+    </div>
+  )
+}
 ```
 </div>
 </div>
@@ -428,6 +540,33 @@ const App = ({ path }) => {
       })
   }, [path])
 
+  return (
+    <span>
+      Data: {JSON.stringify(data)}
+    </span>
+  );
+}
+```
+```js
+//answer
+const useFethData = (path) => {
+  const [data, setData] = React.useState(null);
+
+  React.useEffect(() => {
+    fetch(path)
+      .then(res => res.json())
+      .then(json => {
+        setData(json);
+      })
+  }, [path]);
+
+  return data;
+}
+
+const App = ({ path }) => {
+  
+  const data = useFetchData(path);
+  
   return (
     <span>
       Data: {JSON.stringify(data)}

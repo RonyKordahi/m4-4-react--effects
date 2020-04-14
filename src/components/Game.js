@@ -1,7 +1,10 @@
-import React from 'react';
+import React, {useState, useEffect} from 'react';
 import styled from 'styled-components';
 
 import cookieSrc from '../cookie.svg';
+
+import Item from "./Item";
+import useInterval from "../hooks/use-interval.hook";
 
 const items = [
   { id: 'cursor', name: 'Cursor', cost: 10, value: 1 },
@@ -9,31 +12,69 @@ const items = [
   { id: 'farm', name: 'Farm', cost: 1000, value: 80 },
 ];
 
-const Game = () => {
-  // TODO: Replace this with React state!
-  const numCookies = 100;
-  const purchasedItems = {
-    cursor: 0,
-    grandma: 0,
-    farm: 0,
-  };
+const calculateCookiesPerTick = (purchasedItems, items) => {
+  let idle1 = purchasedItems[items[0].id] * items[0].value;
+  let idle2 = purchasedItems[items[1].id] * items[1].value;
+  let idle3 = purchasedItems[items[2].id] * items[2].value;
+  let sum = idle1 + idle2 + idle3;
+  return sum;
+}
 
+const Game = () => {
+  const [cookies, setCookies] = useState(0);
+  const [purchasedItems, setPurchasedItems] = useState({cursor: 0, grandma: 0, farm: 0});
+  const [cookiesPS, setCookiesPS] = useState(0);
+
+  useEffect(() => {
+    const handleSpace = (event) => {
+      if (event.key === " "){
+        setCookies(cookies + 1);
+      }
+    }
+
+    document.title = `${cookies} cookies - Cookie Clicker`;
+    window.addEventListener("keyup", handleSpace);
+
+    return () => {
+      document.title = `Cookie Clicker Workshop`;
+      window.removeEventListener("keyup", handleSpace);
+    };
+  }, [cookies]);
+  
   return (
     <Wrapper>
       <GameArea>
         <Indicator>
-          <Total>{numCookies} cookies</Total>
-          {/* TODO: Calcuate the cookies per second and show it here: */}
-          <strong>0</strong> cookies per second
+          <Total>{cookies} cookies</Total>
+          {useInterval(() => {
+            const numOfGeneratedCookies = calculateCookiesPerTick(purchasedItems, items);
+            setCookiesPS(numOfGeneratedCookies);
+            setCookies(cookies + cookiesPS);
+            }, 1000)
+          }
+          <strong>{cookiesPS}</strong> cookies per second
         </Indicator>
-        <Button>
+        <Button onClick={(ev => {
+          setCookies(cookies + 1);
+        })}>
           <Cookie src={cookieSrc} />
         </Button>
       </GameArea>
 
       <ItemArea>
         <SectionTitle>Items:</SectionTitle>
-        {/* TODO: Add <Item> instances here, 1 for each item type. */}
+        {items.map((item, index) => {
+
+          return <Item 
+                    key={item.id} 
+                    cookies={cookies} 
+                    setCookies={setCookies} 
+                    setPurchasedItems={setPurchasedItems}
+                    item={item} 
+                    purchasedItems={purchasedItems}
+                    doFocus={index === 0}>
+                  </Item>;
+        })}
       </ItemArea>
     </Wrapper>
   );
